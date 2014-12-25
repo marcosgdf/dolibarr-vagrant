@@ -29,7 +29,7 @@ vagrantfile-local:
                     - '--hiera_config /vagrant/puphpet/puppet/hiera.yaml'
                     - '--parser future'
         synced_folder:
-            nxpJMceKAfF4:
+            uAhm3xdxyb2W:
                 owner: ''
                 group: ''
                 source: ../dolibarr
@@ -78,7 +78,7 @@ apache:
     modules:
         - rewrite
     vhosts:
-        9rof07nwfurr:
+        7rxmnc8xlywm:
             servername: dev.dolibarr.org
             docroot: /var/www/htdocs
             port: '80'
@@ -99,7 +99,7 @@ nginx:
         proxy_buffers: '4 256k'
     upstreams: {  }
     vhosts:
-        7kdibe3yq9jv:
+        mq3nqbftk2ht:
             proxy: ''
             server_name: awesome.dev
             server_aliases:
@@ -113,7 +113,7 @@ nginx:
                 - index.php
             envvars:
                 - 'APP_ENV dev'
-            engine: ''
+            engine: php
             client_max_body_size: 1m
             ssl_cert: ''
             ssl_key: ''
@@ -182,7 +182,7 @@ mysql:
     root_password: root
     adminer: '1'
     databases:
-        RpxY7iy4QQ2m:
+        zFbEpHMwPfCj:
             grant:
                 - ALTER
                 - CREATE
@@ -198,7 +198,7 @@ mysql:
             password: user
             sql_file: /var/www/dev/initdata/mysqldump_dolibarr_3.5.0.sql
 postgresql:
-    install: '0'
+    install: '1'
     settings:
         root_password: '123'
         user_group: postgres

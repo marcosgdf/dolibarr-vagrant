@@ -20,7 +20,9 @@ Remember to update the OS regularly and to add the vhost dev.dolibarr.org to you
 * OS: Debian Wheezy 7.5 x64
 * HTTP server: Apache 2.4.10
 * PHP: 5.5.20-1~dotdeb.1
-* DB: MySQL 5.6.21-1~dotdeb.1
+* DB:
+	* MySQL 5.6.21-1~dotdeb.1
+	* PostgreSQL 9.3.5
 * XDebug
 * Xhprof
 * Mailcatcher 0.5.12
@@ -32,10 +34,15 @@ Remember to update the OS regularly and to add the vhost dev.dolibarr.org to you
 * Vhost: dev.dolibarr.org
 * Root user: root
 * Root password: root
-* Configured DB users:
+* MySQL:
 	* user/user for db dolibarr
 	* root/root
-* Initial dolibarr data: dev/initdata/mysqldump_dolibarr-3.5.0.sql
+	* Initial dolibarr data: dev/initdata/mysqldump_dolibarr-3.5.0.sql
+* PostgreSQL:
+	* postgres/123
+	
+#### DB access
+DB connections outside localhost are not allowed. You must connect through a SSH tunnel. You can find the private key for vagrant user in puphpet/files/dot/ssh/id_rsa
 
 #### Mailcatcher
 Configure Dolibarr to send all emails through SMTP 127.0.0.1 with port 1025 with user admin and no password.
