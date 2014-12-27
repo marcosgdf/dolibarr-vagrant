@@ -14,7 +14,7 @@ Mimic the following directory structure
 
 Now you are ready to start you Vagrant machine.
 
-Remember to update the OS regularly and to add the vhost dev.dolibarr.org to your hosts file. [How?](http://en.wikipedia.org/wiki/Hosts_%28file%29#File_content)
+Remember to update the OS regularly and to add the vhost dolibarr.local to your hosts file. [How?](http://en.wikipedia.org/wiki/Hosts_%28file%29#File_content)
 
 ### Stack
 * OS: Debian Wheezy 7.5 x64
@@ -31,7 +31,7 @@ Remember to update the OS regularly and to add the vhost dev.dolibarr.org to you
 
 ### Usage
 * IP: 192.168.42.101
-* Vhost: dev.dolibarr.org
+* Vhost: dolibarr.local
 * Root user: root
 * Root password: root
 * MySQL:
@@ -42,7 +42,7 @@ Remember to update the OS regularly and to add the vhost dev.dolibarr.org to you
 	* postgres/123
 	
 #### DB access
-DB connections outside localhost are not allowed. You must connect through a SSH tunnel. You can find the private key for vagrant user in puphpet/files/dot/ssh/id_rsa
+DB connections outside the machine are not allowed. You must connect through a SSH tunnel. You can find the private key for vagrant user in puphpet/files/dot/ssh/id_rsa
 
 #### Mailcatcher
 Configure Dolibarr to send all emails through SMTP 127.0.0.1 with port 1025 with user admin and no password.

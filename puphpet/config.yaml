@@ -79,7 +79,7 @@ apache:
         - rewrite
     vhosts:
         jio3vb1ccsxv:
-            servername: dev.dolibarr.org
+            servername: dolibarr.local
             docroot: /var/www/dolibarr/htdocs
             port: '80'
             setenv:
