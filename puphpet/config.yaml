@@ -29,11 +29,11 @@ vagrantfile-local:
                     - '--hiera_config /vagrant/puphpet/puppet/hiera.yaml'
                     - '--parser future'
         synced_folder:
-            uAhm3xdxyb2W:
+            XURLecNigGej:
                 owner: ''
                 group: ''
                 source: ../dolibarr
-                target: /var/www
+                target: /var/www/dolibarr
                 sync_type: default
                 rsync:
                     auto: 'false'
@@ -78,12 +78,26 @@ apache:
     modules:
         - rewrite
     vhosts:
-        7rxmnc8xlywm:
+        jio3vb1ccsxv:
             servername: dev.dolibarr.org
-            docroot: /var/www/htdocs
+            docroot: /var/www/dolibarr/htdocs
             port: '80'
             setenv:
                 - 'APP_ENV dev'
+            directories:
+                bfbbnd3chmfh:
+                    provider: directory
+                    path: /var/www/dolibarr/htdocs
+                    options:
+                        - Indexes
+                        - FollowSymlinks
+                        - MultiViews
+                    allow_override:
+                        - All
+                    require:
+                        - all
+                        - granted
+                    custom_fragment: ''
             engine: php
             custom_fragment: ''
             ssl_cert: ''
@@ -99,7 +113,7 @@ nginx:
         proxy_buffers: '4 256k'
     upstreams: {  }
     vhosts:
-        mq3nqbftk2ht:
+        twhkytkntejm:
             proxy: ''
             server_name: awesome.dev
             server_aliases:
@@ -182,7 +196,7 @@ mysql:
     root_password: root
     adminer: '1'
     databases:
-        zFbEpHMwPfCj:
+        9Ys80MpEn4Rb:
             grant:
                 - ALTER
                 - CREATE
@@ -196,7 +210,7 @@ mysql:
             host: localhost
             user: user
             password: user
-            sql_file: /var/www/dev/initdata/mysqldump_dolibarr_3.5.0.sql
+            sql_file: /var/www/dolibarr/dev/initdata/mysqldump_dolibarr_3.5.0.sql
 postgresql:
     install: '1'
     settings:
