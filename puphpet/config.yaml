@@ -192,7 +192,9 @@ python:
     versions: {  }
 mysql:
     install: '1'
-    override_options: {  }
+    override_options:
+        mysqld:
+            sql_mode: 'STRICT_ALL_TABLES,ONLY_FULL_GROUP_BY,NO_ZERO_DATE'
     root_password: root
     adminer: '1'
     databases:

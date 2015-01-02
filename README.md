@@ -18,6 +18,7 @@ Remember to update the OS regularly and to add the vhost dolibarr.local to your 
 
 ### Stack
 * OS: Debian Wheezy 7.5 x64
+* 512 MB
 * HTTP server: Apache 2.4.10
 * PHP: 5.5.20-1~dotdeb.1
 * DB:
