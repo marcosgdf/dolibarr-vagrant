@@ -14,7 +14,13 @@ Mimic the following directory structure
 
 Now you are ready to start you Vagrant machine.
 
-Remember to update the OS regularly and to add the vhost dolibarr.local to your hosts file. [How?](http://en.wikipedia.org/wiki/Hosts_%28file%29#File_content)
+Remember to update the OS regularly and to add the vhost `dolibarr.local` to your hosts file. [How?](http://en.wikipedia.org/wiki/Hosts_%28file%29#File_content)
+
+After Puppet provision, you must reboot MySQL service so that the strict mode gets applied. To do so:
+```
+1. vagrant ssh
+2. sudo service mysql restart
+```
 
 ### Stack
 * OS: Debian Wheezy 7.5 x64
@@ -50,7 +56,7 @@ Configure Dolibarr to send all emails through SMTP 127.0.0.1 with port 1025 with
 You can access MailCatcher to read all outgoing emails at http://192.168.42.101:1080
 
 #### Adminer
-Adminer is a MySQL web client. You can access it through http://192.168.42.101/adminer/
+Adminer is a DB web client. You can access it through http://192.168.42.101/adminer/
 
 #### XHProf
 XHProf is a function-level hierarchical profiler for PHP. You can access it through http://192.168.42.101/xhprof/xhprof_html/
