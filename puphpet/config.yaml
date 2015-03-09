@@ -29,12 +29,12 @@ vagrantfile-local:
                     - '--hiera_config /vagrant/puphpet/puppet/hiera.yaml'
                     - '--parser future'
         synced_folder:
-            XURLecNigGej:
+            tCPNudtqHe9M:
                 owner: ''
                 group: ''
                 source: ../dolibarr
                 target: /var/www/dolibarr
-                sync_type: default
+                sync_type: nfs
                 rsync:
                     auto: 'false'
         usable_port_range:
@@ -65,7 +65,7 @@ cron:
     jobs: {  }
 firewall:
     install: '1'
-    rules: null
+    rules: {  }
 apache:
     install: '1'
     settings:
@@ -78,14 +78,14 @@ apache:
     modules:
         - rewrite
     vhosts:
-        jio3vb1ccsxv:
+        fu4lyp5jhclj:
             servername: dolibarr.local
             docroot: /var/www/dolibarr/htdocs
             port: '80'
             setenv:
                 - 'APP_ENV dev'
             directories:
-                bfbbnd3chmfh:
+                mtrgwgkyge4b:
                     provider: directory
                     path: /var/www/dolibarr/htdocs
                     options:
@@ -113,7 +113,7 @@ nginx:
         proxy_buffers: '4 256k'
     upstreams: {  }
     vhosts:
-        twhkytkntejm:
+        y2tbvpho9hmn:
             proxy: ''
             server_name: awesome.dev
             server_aliases:
@@ -172,6 +172,7 @@ xdebug:
         xdebug.remote_enable: '1'
         xdebug.remote_handler: dbgp
         xdebug.remote_port: '9000'
+        xdebug.collect_params: '4'
 xhprof:
     install: '1'
 wpcli:
@@ -192,13 +193,11 @@ python:
     versions: {  }
 mysql:
     install: '1'
-    override_options:
-        mysqld:
-            sql_mode: 'STRICT_ALL_TABLES,ONLY_FULL_GROUP_BY,NO_ZERO_DATE'
+    override_options: {  }
     root_password: root
     adminer: '1'
     databases:
-        9Ys80MpEn4Rb:
+        bTSOpY63KiaT:
             grant:
                 - ALTER
                 - CREATE
