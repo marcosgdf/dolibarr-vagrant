@@ -26,15 +26,15 @@ After Puppet provision, you must reboot MySQL service so that the strict mode ge
 * OS: Debian Wheezy 7.5 x64
 * 512 MB
 * HTTP server: Apache 2.4.10
-* PHP: 5.5.22-1~dotdeb.1
+* PHP: 5.6.9-1~dotdeb+7.2
 * DB:
 	* MySQL 5.6.23-1~dotdeb.1
-	* PostgreSQL 9.3.6
+	* PostgreSQL 9.3.8
 * XDebug
 * Xhprof
 * Mailcatcher 0.5.12
 * Composer
-* Adminer 4.2.0
+* Adminer 4.2.1
 
 ### Usage
 * IP: 192.168.42.101
