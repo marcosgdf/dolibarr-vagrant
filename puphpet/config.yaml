@@ -1,36 +1,40 @@
 vagrantfile:
     target: local
     vm:
-        box: puphpet/debian75-x64
-        box_url: puphpet/debian75-x64
-        hostname: dolibarr.local
-        memory: '512'
-        cpus: '1'
-        chosen_provider: virtualbox
-        network:
-            private_network: 192.168.42.101
-            forwarded_port: {  }
-        post_up_message: ''
         provider:
-            virtualbox:
-                modifyvm:
-                    natdnshostresolver1: 'on'
-                showgui: ''
-            vmware:
-                numvcpus: 1
-            parallels:
-                cpus: 1
+            local:
+                box: puphpet/ubuntu1404-x64
+                box_url: puphpet/ubuntu1404-x64
+                box_version: 'false'
+                chosen_virtualizer: virtualbox
+                virtualizers:
+                    virtualbox:
+                        modifyvm:
+                            natdnshostresolver1: false
+                        showgui: 0
+                    vmware:
+                        numvcpus: 1
+                    parallels:
+                        use_linked_clone: 0
+                        check_guest_tools: 0
+                        update_guest_tools: 0
+                machines:
+                    vflm_pimm3t5t0who:
+                        id: machine1
+                        network:
+                            private_network: 192.168.42.101
+                        hostname: dolibarr.local
+                        memory: '512'
+                        cpus: '1'
         provision:
             puppet:
-                manifests_path: puphpet/puppet
-                manifest_file: site.pp
+                manifests_path: puphpet/puppet/manifests
                 module_path: puphpet/puppet/modules
                 options:
                     - '--verbose'
                     - '--hiera_config /vagrant/puphpet/puppet/hiera.yaml'
-                    - '--parser future'
         synced_folder:
-            vflsf_fole2ztr4tcd:
+            vflsf_eyqkcw3wekqh:
                 source: ../dolibarr
                 target: /var/www/dolibarr
                 sync_type: default
@@ -38,6 +42,9 @@ vagrantfile:
                     smb_host: ''
                     smb_username: ''
                     smb_password: ''
+                    mount_options:
+                        dir_mode: '0775'
+                        file_mode: '0664'
                 rsync:
                     args:
                         - '--verbose'
@@ -52,18 +59,26 @@ vagrantfile:
         usable_port_range:
             start: 10200
             stop: 10500
+        post_up_message: ''
     ssh:
-        host: null
-        port: null
-        private_key_path: null
+        host: 'false'
+        port: 'false'
+        private_key_path: 'false'
         username: vagrant
-        guest_port: null
-        keep_alive: true
-        forward_agent: false
-        forward_x11: false
+        guest_port: 'false'
+        keep_alive: '1'
+        forward_agent: 'false'
+        forward_x11: 'false'
         shell: 'bash -l'
+        insert_key: 'false'
     vagrant:
         host: detect
+    proxy:
+        http: ''
+        https: ''
+        ftp: ''
+        no_proxy: ''
+        enabled: ''
 server:
     install: '1'
     packages: {  }
@@ -75,9 +90,8 @@ locale:
     install: '1'
     settings:
         default_locale: ''
-        locales:
-            - 'en_GB.UTF-8 UTF-8'
-            - 'en_US.UTF-8 UTF-8'
+        locales: {  }
+        timezone: UTC
 firewall:
     install: '1'
     rules: {  }
@@ -90,9 +104,13 @@ nginx:
         default_vhost: 1
         proxy_buffer_size: 128k
         proxy_buffers: '4 256k'
+        proxy_connect_timeout: 600s
+        proxy_send_timeout: 600s
+        proxy_read_timeout: 600s
+        names_hash_bucket_size: 128
     upstreams: {  }
     vhosts:
-        nxv_c3w5kg415pz7:
+        nxv_8d2tz408um1y:
             server_name: awesome.dev
             server_aliases:
                 - www.awesome.dev
@@ -112,9 +130,10 @@ nginx:
             rewrite_to_https: '1'
             spdy: '1'
             locations:
-                nxvl_7lzwbae0mqax:
+                nxvl_j2bqt3vxmx09:
                     location: /
                     autoindex: 'off'
+                    internal: 'false'
                     try_files:
                         - $uri
                         - $uri/
@@ -122,9 +141,12 @@ nginx:
                     fastcgi: ''
                     fastcgi_index: ''
                     fastcgi_split_path: ''
-                nxvl_qrg4ef8fqdbf:
+                    proxy: ''
+                    proxy_redirect: ''
+                nxvl_rdvov4yqh0uu:
                     location: '~ \.php$'
                     autoindex: 'off'
+                    internal: 'false'
                     try_files:
                         - $uri
                         - $uri/
@@ -135,10 +157,13 @@ nginx:
                     fast_cgi_params_extra:
                         - 'SCRIPT_FILENAME $request_filename'
                         - 'APP_ENV dev'
+                    proxy: ''
+                    proxy_redirect: ''
     proxies: {  }
 apache:
     install: '1'
     settings:
+        version: 2.4
         user: www-data
         group: www-data
         default_vhost: true
@@ -149,7 +174,7 @@ apache:
         - proxy_fcgi
         - rewrite
     vhosts:
-        av_mbe9e95bh6wv:
+        av_uy083v1u4ng5:
             servername: dolibarr.local
             docroot: /var/www/dolibarr/htdocs
             port: '80'
@@ -164,7 +189,7 @@ apache:
             ssl_protocol: ''
             ssl_cipher: ''
             directories:
-                avd_wlk4ff2737ed:
+                avd_qkna0f0xm0px:
                     path: /var/www/dolibarr
                     options:
                         - Indexes
@@ -176,7 +201,7 @@ apache:
                         - 'all granted'
                     custom_fragment: ''
                     files_match:
-                        avdfm_2qlo6o7xqhz9:
+                        avdfm_z43a2cwwdj8r:
                             path: \.php$
                             sethandler: 'proxy:fcgi://127.0.0.1:9000'
                             custom_fragment: ''
@@ -194,6 +219,7 @@ php:
             - gd
             - curl
             - imagick
+            - xml
         pear: {  }
         pecl: {  }
     ini:
@@ -204,7 +230,7 @@ php:
     fpm_ini:
         error_log: /var/log/php-fpm.log
     fpm_pools:
-        phpfp_yb4v7tn2ylno:
+        phpfp_lgr4r4dr8fm6:
             ini:
                 prefix: www
                 listen: '127.0.0.1:9000'
@@ -254,6 +280,8 @@ python:
     versions: {  }
 nodejs:
     install: '0'
+    settings:
+        version: null
     npm_packages: {  }
 hhvm:
     install: '0'
@@ -270,23 +298,44 @@ hhvm:
         display_errors: 'On'
         error_reporting: '-1'
         date.timezone: UTC
+mariadb:
+    install: '0'
+    settings:
+        version: '10.0'
+        root_password: '123'
+        override_options: {  }
+    adminer: 0
+    users:
+        mariadbnu_t85hrrgmyge8:
+            name: dbuser
+            password: '123'
+    databases:
+        mariadbnd_yyiunq1yttg2:
+            name: dbname
+            sql: ''
+    grants:
+        mariadbng_qvfa0oqswc1z:
+            user: dbuser
+            table: '*.*'
+            privileges:
+                - ALL
 mysql:
     install: '1'
     settings:
-        version: '5.6'
+        version: '5.7'
         root_password: root
         override_options: {  }
     adminer: '1'
     users:
-        mysqlnu_z0y5irx106ic:
+        mysqlnu_mykjmqrsemck:
             name: user
             password: user
     databases:
-        mysqlnd_5dlxj6s4q28z:
+        mysqlnd_z7ql94ggklsf:
             name: dolibar
-            sql: /var/www/dolibarr/dev/initdata/mysqldump_dolibarr_3.5.0.sql
+            sql: /var/www/dolibarr/dev/initdemo/mysqldump_dolibarr_3.8.0.sql
     grants:
-        mysqlng_ln6za3jner06:
+        mysqlng_0t9xcux177cs:
             user: user
             table: '*.*'
             privileges:
@@ -298,27 +347,6 @@ mysql:
                 - INSERT
                 - SELECT
                 - UPDATE
-mariadb:
-    install: '0'
-    settings:
-        version: '10.0'
-        root_password: '123'
-        override_options: {  }
-    adminer: 0
-    users:
-        mariadbnu_gxtju40ydet3:
-            name: dbuser
-            password: '123'
-    databases:
-        mariadbnd_08iqxqkb33bw:
-            name: dbname
-            sql: ''
-    grants:
-        mariadbng_yrwx0tbq44b5:
-            user: dbuser
-            table: '*.*'
-            privileges:
-                - ALL
 postgresql:
     install: '1'
     settings:
@@ -334,27 +362,27 @@ postgresql:
 mongodb:
     install: '0'
     settings:
-        auth: 1
         bind_ip: 127.0.0.1
         port: '27017'
+    globals:
+        version: 2.6.0
     databases: {  }
 redis:
     install: '0'
     settings:
-        conf_port: '6379'
+        port: '6379'
 sqlite:
     install: '0'
     adminer: 0
     databases: {  }
-mailcatcher:
+mailhog:
     install: '1'
     settings:
         smtp_ip: 0.0.0.0
         smtp_port: 1025
         http_ip: 0.0.0.0
-        http_port: '1080'
-        mailcatcher_path: /usr/local/rvm/wrappers/default
-        from_email_method: headers
+        http_port: '8025'
+        path: /usr/local/bin/mailhog
 beanstalkd:
     install: '0'
     settings:
@@ -378,6 +406,7 @@ elastic_search:
     settings:
         version: 1.4.1
         java_install: true
+    instances: {  }
 solr:
     install: '0'
     settings:
