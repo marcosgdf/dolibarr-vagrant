@@ -23,18 +23,18 @@ After Puppet provision, you must reboot MySQL service so that the strict mode ge
 ```
 
 ### Stack
-* OS: Debian Wheezy 7.5 x64
+* OS: Ubuntu 14.04.3 LTS x64
 * 512 MB
-* HTTP server: Apache 2.4.10
-* PHP: 5.6.11-1~dotdeb+7.1
+* HTTP server: Apache 2.4.18
+* PHP: 5.6.19-1+deb.sury.org~trusty+1
 * DB:
-	* MySQL 5.6.25-1~dotdeb+7.1
-	* PostgreSQL 9.3.9 (remember to follow this tutorial https://gist.github.com/ffmike/877447 after provisioning the VM)
+	* MySQL 5.7.11 MySQL Community Server
+	* PostgreSQL 9.3.11 (remember to follow this tutorial https://gist.github.com/ffmike/877447 after provisioning the VM)
 * XDebug
 * Xhprof
-* Mailcatcher 0.5.12
+* Mailhog 0.1.8
 * Composer
-* Adminer 4.2.1
+* Adminer 4.2.4
 
 ### Usage
 * IP: 192.168.42.101
@@ -51,9 +51,8 @@ After Puppet provision, you must reboot MySQL service so that the strict mode ge
 #### DB access
 DB connections outside the machine are not allowed. You must connect through a SSH tunnel. You can find the private key for vagrant user in puphpet/files/dot/ssh/id_rsa
 
-#### Mailcatcher
-Configure Dolibarr to send all emails through SMTP 127.0.0.1 with port 1025 with user admin and no password.
-You can access MailCatcher to read all outgoing emails at http://192.168.42.101:1080
+#### Mailhog
+You can access Mailhog to read all outgoing emails at http://192.168.42.101:8025
 
 #### Adminer
 Adminer is a DB web client. You can access it through http://192.168.42.101/adminer/
