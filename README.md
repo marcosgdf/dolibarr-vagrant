@@ -29,7 +29,7 @@ After Puppet provision, you must reboot MySQL service so that the strict mode ge
 * PHP: 5.6.11-1~dotdeb+7.1
 * DB:
 	* MySQL 5.6.25-1~dotdeb+7.1
-	* PostgreSQL 9.3.9
+	* PostgreSQL 9.3.9 (remember to follow this tutorial https://gist.github.com/ffmike/877447 after provisioning the VM)
 * XDebug
 * Xhprof
 * Mailcatcher 0.5.12
