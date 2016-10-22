@@ -30,6 +30,7 @@ class mysql::params {
   $client_dev_package_provider = undef
   $daemon_dev_package_ensure   = 'present'
   $daemon_dev_package_provider = undef
+  $xtrabackup_package_name     = 'percona-xtrabackup'
 
 
   case $::osfamily {
@@ -96,7 +97,7 @@ class mysql::params {
     'Suse': {
       case $::operatingsystem {
         'OpenSuSE': {
-          if versioncmp( $::operatingsystemmajrelease, '13' ) >= 0 {
+          if versioncmp( $::operatingsystemmajrelease, '12' ) >= 0 {
             $client_package_name = 'mariadb-client'
             $server_package_name = 'mariadb'
             # First service start fails if this is set. Runs fine without
@@ -137,10 +138,17 @@ class mysql::params {
       $root_group          = 'root'
       $mysql_group         = 'mysql'
       $server_service_name = 'mysql'
-      $socket              = $::operatingsystem ? {
-        /OpenSuSE/         => '/var/run/mysql/mysql.sock',
-        /(SLES|SLED)/      => '/var/lib/mysql/mysql.sock',
+
+      if $::operatingsystem =~ /(SLES|SLED)/ {
+        if versioncmp( $::operatingsystemmajrelease, '12' ) >= 0 {
+          $socket = '/run/mysql/mysql.sock'
+        } else {
+          $socket = '/var/lib/mysql/mysql.sock'
+        }
+      } else {
+        $socket = '/var/run/mysql/mysql.sock'
       }
+
       $ssl_ca              = '/etc/mysql/cacert.pem'
       $ssl_cert            = '/etc/mysql/server-cert.pem'
       $ssl_key             = '/etc/mysql/server-key.pem'
@@ -169,7 +177,7 @@ class mysql::params {
       $log_error               = '/var/log/mysql/error.log'
       $pidfile                 = '/var/run/mysqld/mysqld.pid'
       $root_group              = 'root'
-      $mysql_group             = 'mysql'
+      $mysql_group             = 'adm'
       $server_service_name     = 'mysql'
       $socket                  = '/var/run/mysqld/mysqld.sock'
       $ssl_ca                  = '/etc/mysql/cacert.pem'
@@ -179,11 +187,15 @@ class mysql::params {
       # mysql::bindings
       $java_package_name   = 'libmysql-java'
       $perl_package_name   = 'libdbd-mysql-perl'
-      $php_package_name    = 'php5-mysql'
+      $php_package_name    = $::lsbdistcodename ? {
+        'xenial'           => 'php-mysql',
+        default            => 'php5-mysql',
+      }
       $python_package_name = 'python-mysqldb'
       $ruby_package_name   = $::lsbdistcodename ? {
         'trusty'           => 'ruby-mysql',
         'jessie'           => 'ruby-mysql',
+        'xenial'           => 'ruby-mysql',
         default            => 'libmysql-ruby',
       }
       $client_dev_package_name = 'libmysqlclient-dev'
@@ -432,7 +444,7 @@ class mysql::params {
   }
 
   ## Additional graceful failures
-  if $::osfamily == 'RedHat' and $::operatingsystemmajrelease == '4' {
+  if $::osfamily == 'RedHat' and $::operatingsystemmajrelease == '4' and $::operatingsystem != 'Amazon' {
     fail("Unsupported platform: puppetlabs-${module_name} only supports RedHat 5.0 and beyond")
   }
 }

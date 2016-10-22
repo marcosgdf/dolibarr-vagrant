@@ -26,4 +26,6 @@ Vagrant.require_version '>= 1.8.1'
 
 Vagrant.configure('2') do |config|
   eval File.read("#{dir}/puphpet/vagrant/Vagrantfile-#{data['target']}")
+  config.vm.boot_timeout = 600
 end
+

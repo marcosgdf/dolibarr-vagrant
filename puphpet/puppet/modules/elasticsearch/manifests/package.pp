@@ -37,22 +37,27 @@ class elasticsearch::package {
   # set params: in operation
   if $elasticsearch::ensure == 'present' {
 
+    if $elasticsearch::restart_package_change {
+      Package[$elasticsearch::package_name] ~> Elasticsearch::Service <| |>
+    }
+    Package[$elasticsearch::package_name] ~> Exec['remove_plugin_dir']
+
     # Create directory to place the package file
+    $package_dir = $elasticsearch::package_dir
     exec { 'create_package_dir_elasticsearch':
       cwd     => '/',
       path    => ['/usr/bin', '/bin'],
-      command => "mkdir -p ${elasticsearch::package_dir}",
-      creates => $elasticsearch::package_dir,
+      command => "mkdir -p ${package_dir}",
+      creates => $package_dir,
     }
 
-    file { $elasticsearch::package_dir:
+    file { $package_dir:
       ensure  => 'directory',
       purge   => $elasticsearch::purge_package_dir,
       force   => $elasticsearch::purge_package_dir,
       backup  => false,
       require => Exec['create_package_dir_elasticsearch'],
     }
-
 
     # Check if we want to install a specific version or not
     if $elasticsearch::version == false {
@@ -77,7 +82,6 @@ class elasticsearch::package {
         default:   { fail("software provider \"${elasticsearch::package_provider}\".") }
       }
 
-      $package_dir = $elasticsearch::package_dir
 
       $filenameArray = split($elasticsearch::package_url, '/')
       $basefilename = $filenameArray[-1]
@@ -111,6 +115,8 @@ class elasticsearch::package {
               "http_proxy=${elasticsearch::proxy_url}",
               "https_proxy=${elasticsearch::proxy_url}",
             ]
+          } else {
+            $exec_environment = []
           }
 
           exec { 'download_package_elasticsearch':
@@ -155,20 +161,28 @@ class elasticsearch::package {
   # Package removal
   } else {
 
-    if ($::operatingsystem == 'OpenSuSE') {
+    if ($::osfamily == 'Suse') {
       Package {
         provider  => 'rpm',
       }
+      $package_ensure = 'absent'
+    } else {
+      $package_ensure = 'purged'
     }
-    $package_ensure = 'purged'
 
   }
 
   if ($elasticsearch::package_provider == 'package') {
 
     package { $elasticsearch::package_name:
-      ensure   => $package_ensure,
+      ensure => $package_ensure,
     }
+
+    exec { 'remove_plugin_dir':
+      refreshonly => true,
+      command     => "rm -rf ${elasticsearch::plugindir}",
+    }
+
 
   } else {
     fail("\"${elasticsearch::package_provider}\" is not supported")

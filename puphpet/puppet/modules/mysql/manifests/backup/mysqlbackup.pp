@@ -2,6 +2,7 @@
 class mysql::backup::mysqlbackup (
   $backupuser         = '',
   $backuppassword     = '',
+  $maxallowedpacket   = '1M',
   $backupdir          = '',
   $backupdirmode      = '0700',
   $backupdirowner     = 'root',
@@ -19,7 +20,7 @@ class mysql::backup::mysqlbackup (
   $prescript          = false,
   $postscript         = false,
   $execpath           = '/usr/bin:/usr/sbin:/bin:/sbin',
-) {
+) inherits mysql::params {
 
   mysql_user { "${backupuser}@localhost":
     ensure        => $ensure,

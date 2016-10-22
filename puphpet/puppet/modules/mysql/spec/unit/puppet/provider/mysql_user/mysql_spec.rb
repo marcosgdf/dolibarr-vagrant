@@ -34,6 +34,12 @@ describe Puppet::Type.type(:mysql_user).provider(:mysql) do
         :string => '/usr/sbin/mysqld  Ver 10.0.21-MariaDB for Linux on x86_64 (MariaDB Server)',
         :mysql_type => 'mariadb',
       },
+      'mariadb-10.0-deb8' =>
+      {
+        :version => '10.0.23',
+        :string => '/usr/sbin/mysqld (mysqld 10.0.23-MariaDB-0+deb8u1)',
+        :mysql_type => 'mariadb',
+      },
       'percona-5.5' =>
       {
         :version => '5.5.39',
@@ -43,6 +49,7 @@ describe Puppet::Type.type(:mysql_user).provider(:mysql) do
     }
 
   let(:defaults_file) { '--defaults-extra-file=/root/.my.cnf' }
+  let(:system_database) { '--database=mysql' }
   let(:newhash) { '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5' }
 
   let(:raw_users) do
@@ -171,8 +178,8 @@ usvn_user@localhost
 
   describe 'create' do
     it 'makes a user' do
-      provider.expects(:mysql).with([defaults_file, '-e', "CREATE USER 'joe'@'localhost' IDENTIFIED BY PASSWORD '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF4'"])
-      provider.expects(:mysql).with([defaults_file, '-e', "GRANT USAGE ON *.* TO 'joe'@'localhost' WITH MAX_USER_CONNECTIONS 10 MAX_CONNECTIONS_PER_HOUR 10 MAX_QUERIES_PER_HOUR 10 MAX_UPDATES_PER_HOUR 10"])
+      provider.expects(:mysql).with([defaults_file, system_database, '-e', "CREATE USER 'joe'@'localhost' IDENTIFIED BY PASSWORD '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF4'"])
+      provider.expects(:mysql).with([defaults_file, system_database, '-e', "GRANT USAGE ON *.* TO 'joe'@'localhost' WITH MAX_USER_CONNECTIONS 10 MAX_CONNECTIONS_PER_HOUR 10 MAX_QUERIES_PER_HOUR 10 MAX_UPDATES_PER_HOUR 10"])
       provider.expects(:exists?).returns(true)
       expect(provider.create).to be_truthy
     end
@@ -180,7 +187,7 @@ usvn_user@localhost
 
   describe 'destroy' do
     it 'removes a user if present' do
-      provider.expects(:mysql).with([defaults_file, '-e', "DROP USER 'joe'@'localhost'"])
+      provider.expects(:mysql).with([defaults_file, system_database, '-e', "DROP USER 'joe'@'localhost'"])
       provider.expects(:exists?).returns(false)
       expect(provider.destroy).to be_truthy
     end
@@ -193,10 +200,10 @@ usvn_user@localhost
   end
 
   describe 'self.mysqld_version' do
-    it 'queries mysql if unset' do
+    it 'uses the mysqld_version fact if unset' do
        provider.class.instance_variable_set(:@mysqld_version_string, nil)
-       provider.class.expects(:mysqld).with(['-V'])
-       expect(provider.mysqld_version).to be_nil
+       Facter.stubs(:value).with(:mysqld_version).returns('5.6.24')
+       expect(provider.mysqld_version).to eq '5.6.24'
     end
     it 'returns 5.7.6 for "mysqld  Ver 5.7.6 for Linux on x86_64 (MySQL Community Server (GPL))"' do
        provider.class.instance_variable_set(:@mysqld_version_string, 'mysqld  Ver 5.7.6 for Linux on x86_64 (MySQL Community Server (GPL))')
@@ -236,42 +243,42 @@ usvn_user@localhost
   describe 'password_hash=' do
     it 'changes the hash mysql 5.5' do
       provider.class.instance_variable_set(:@mysqld_version_string, mysql_version_string_hash['mysql-5.5'][:string])
-      provider.expects(:mysql).with([defaults_file, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
+      provider.expects(:mysql).with([defaults_file, system_database, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
 
       provider.expects(:password_hash).returns('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
       provider.password_hash=('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
     end
     it 'changes the hash mysql 5.6' do
       provider.class.instance_variable_set(:@mysqld_version_string, mysql_version_string_hash['mysql-5.6'][:string])
-      provider.expects(:mysql).with([defaults_file, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
+      provider.expects(:mysql).with([defaults_file, system_database, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
 
       provider.expects(:password_hash).returns('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
       provider.password_hash=('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
     end
     it 'changes the hash mysql < 5.7.6' do
       provider.class.instance_variable_set(:@mysqld_version_string, mysql_version_string_hash['mysql-5.7.1'][:string])
-      provider.expects(:mysql).with([defaults_file, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
+      provider.expects(:mysql).with([defaults_file, system_database, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
 
       provider.expects(:password_hash).returns('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
       provider.password_hash=('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
     end
     it 'changes the hash MySQL >= 5.7.6' do
       provider.class.instance_variable_set(:@mysqld_version_string, mysql_version_string_hash['mysql-5.7.6'][:string])
-      provider.expects(:mysql).with([defaults_file, '-e', "ALTER USER 'joe'@'localhost' IDENTIFIED WITH mysql_native_password AS '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
+      provider.expects(:mysql).with([defaults_file, system_database, '-e', "ALTER USER 'joe'@'localhost' IDENTIFIED WITH mysql_native_password AS '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
 
       provider.expects(:password_hash).returns('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
       provider.password_hash=('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
     end
     it 'changes the hash mariadb-10.0' do
       provider.class.instance_variable_set(:@mysqld_version_string, mysql_version_string_hash['mariadb-10.0'][:string])
-      provider.expects(:mysql).with([defaults_file, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
+      provider.expects(:mysql).with([defaults_file, system_database, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
 
       provider.expects(:password_hash).returns('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
       provider.password_hash=('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
     end
     it 'changes the hash percona-5.5' do
       provider.class.instance_variable_set(:@mysqld_version_string, mysql_version_string_hash['percona-5.5'][:string])
-      provider.expects(:mysql).with([defaults_file, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
+      provider.expects(:mysql).with([defaults_file, system_database, '-e', "SET PASSWORD FOR 'joe'@'localhost' = '*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5'"]).returns('0')
 
       provider.expects(:password_hash).returns('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
       provider.password_hash=('*6C8989366EAF75BB670AD8EA7A7FC1176A95CEF5')
@@ -289,7 +296,7 @@ usvn_user@localhost
 
     describe "#{property}=" do
       it "changes #{property}" do
-        provider.expects(:mysql).with([defaults_file, '-e', "GRANT USAGE ON *.* TO 'joe'@'localhost' WITH #{property.upcase} 42"]).returns('0')
+        provider.expects(:mysql).with([defaults_file, system_database, '-e', "GRANT USAGE ON *.* TO 'joe'@'localhost' WITH #{property.upcase} 42"]).returns('0')
         provider.expects(property.to_sym).returns('42')
         provider.send("#{property}=".to_sym, '42')
       end

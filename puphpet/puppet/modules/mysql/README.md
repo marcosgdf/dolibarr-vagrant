@@ -11,6 +11,8 @@
     * [Customize configuration](#create-custom-configuration)
     * [Work with an existing server](#work-with-an-existing-server)
     * [Specify passwords](#specify-passwords)
+    * [Install Percona server on CentOS](#install-percona-server-on-centos)
+    * [Install MariaDB on Ubuntu](#install-mariadb-on-ubuntu)
 4. [Reference - An under-the-hood peek at what the module is doing and how](#reference)
 5. [Limitations - OS compatibility, etc.](#limitations)
 6. [Development - Guide for contributing to the module](#development)
@@ -131,7 +133,8 @@ mysql::db { 'mydb':
   password => 'mypass',
   host     => 'localhost',
   grant    => ['SELECT', 'UPDATE'],
-  sql      => '/path/to/sqlfile',
+  sql      => '/path/to/sqlfile.gz',
+  import_cat_cmd => 'zcat',
   import_timeout => 900,
 }
 ```
@@ -151,6 +154,8 @@ host=localhost
 password=secret
 ```
 
+This module uses the `mysqld_version` fact to discover the server version being used.  By default, this is set to the output of `mysqld -V`.  If you're working with a remote MySQL server, you may need to set a custom fact for `mysqld_version` to ensure correct behaviour.
+
 When working with a remote server, do *not* use the `mysql::server` class in your Puppet manifests.
 
 ### Specify passwords
@@ -164,6 +169,157 @@ mysql::db { 'mydb':
   host     => 'localhost',
   grant    => ['SELECT', 'UPDATE'],
 }
+```
+
+### Install Percona server on CentOS
+
+This example shows how to do a minimal installation of a Percona server on a
+CentOS system. This sets up the Percona server, client, and bindings (including Perl and Python bindings). You can customize this usage and update the version as needed. 
+
+This usage has been tested on Puppet 4.4 / CentOS 7 / Percona Server 5.7.
+
+**Note:** The installation of the yum repository is not part of this package
+and is here only to show a full example of how you can install.
+
+```puppet
+yumrepo { 'percona':
+  descr    => 'CentOS $releasever - Percona',
+  baseurl  => 'http://repo.percona.com/centos/$releasever/os/$basearch/',
+  gpgkey   => 'http://www.percona.com/downloads/percona-release/RPM-GPG-KEY-percona',
+  enabled  => 1,
+  gpgcheck => 1,
+}
+
+class {'mysql::server':
+  package_name     => 'Percona-Server-server-57',
+  package_ensure   => '5.7.11-4.1.el7',
+  service_name     => 'mysql',
+  config_file      => '/etc/my.cnf',
+  includedir       => '/etc/my.cnf.d',
+  root_password    => 'PutYourOwnPwdHere',
+  override_options => {
+    mysqld => {
+      log-error => '/var/log/mysqld.log',
+      pid-file  => '/var/run/mysqld/mysqld.pid',
+    },
+    mysqld_safe => {
+      log-error => '/var/log/mysqld.log',
+    },
+  }
+}
+
+# Note: Installing Percona-Server-server-57 also installs Percona-Server-client-57.
+# This shows how to install the Percona MySQL client on its own
+class {'mysql::client':
+  package_name   => 'Percona-Server-client-57',
+  package_ensure => '5.7.11-4.1.el7',
+}
+
+# These packages are normally installed along with Percona-Server-server-57
+# If you needed to install the bindings, however, you could do so with this code
+class { 'mysql::bindings':
+  client_dev_package_name   => 'Percona-Server-shared-57',
+  client_dev_package_ensure => '5.7.11-4.1.el7',
+  client_dev                => true,
+  daemon_dev_package_name   => 'Percona-Server-devel-57',
+  daemon_dev_package_ensure => '5.7.11-4.1.el7',
+  daemon_dev                => true,
+  perl_enable               => true,
+  perl_package_name         => 'perl-DBD-MySQL',
+  python_enable             => true,
+  python_package_name       => 'MySQL-python',
+}
+
+# Dependencies definition
+Yumrepo['percona']->
+Class['mysql::server']
+
+Yumrepo['percona']->
+Class['mysql::client']
+
+Yumrepo['percona']->
+Class['mysql::bindings']
+```
+
+### Install MariaDB on Ubuntu
+
+#### Optional: Install the MariaDB official repo
+
+In this example, we'll use the latest stable (currently 10.1) from the official MariaDB repository, not the one from the distro repository. You could instead use the package from the Ubuntu repository. Make sure you use the repository corresponding to the version you want.
+
+**Note:** `sfo1.mirrors.digitalocean.com` is one of many mirrors available. You can use any official mirror.
+
+```
+include apt
+
+apt::source { 'mariadb':
+  location => 'http://sfo1.mirrors.digitalocean.com/mariadb/repo/10.1/ubuntu',
+  release  => $::lsbdistcodename,
+  repos    => 'main',
+  key      => { 
+    id     => '199369E5404BD5FC7D2FE43BCBCB082A1BB943DB',
+    server => 'hkp://keyserver.ubuntu.com:80',
+  },
+  include => {
+    src   => false,
+    deb   => true,
+  },
+}
+```
+
+#### Install the MariaDB server
+
+This example shows MariaDB server installation on Ubuntu Trusty. Adjust the version and the parameters of `my.cnf` as needed. All parameters of the `my.cnf` can be defined using the `override_options` parameter.
+
+The folders `/var/log/mysql` and `/var/run/mysqld` are created automatically, but if you are using other custom folders, they should exist as prerequisites for this code.
+
+All the values set here are an example of a working minimal configuration.
+
+Specify the version of the package you want with the `package_ensure` parameter.
+
+```
+class {'::mysql::server':
+  package_name     => 'mariadb-server',
+  package_ensure   => '10.1.14+maria-1~trusty',
+  service_name     => 'mysql',
+  root_password    => 'AVeryStrongPasswordUShouldEncrypt!',
+  override_options => {
+    mysqld => {
+      'log-error' => '/var/log/mysql/mariadb.log',
+      'pid-file'  => '/var/run/mysqld/mysqld.pid',
+    },
+    mysqld_safe => {
+      'log-error' => '/var/log/mysql/mariadb.log',
+    },
+  }
+}
+
+# Dependency management. Only use that part if you are installing the repository
+# as shown in the Preliminary step of this example.
+Apt::Source['mariadb'] ~>
+Class['apt::update'] ->
+Class['::mysql::server']
+
+```
+
+#### Install the MariaDB client
+
+This example shows how to install the MariaDB client and all of the bindings at once. You can do this installation separately from the server installation.
+
+Specify the version of the package you want with the `package_ensure` parameter.
+
+```
+class {'::mysql::client':
+  package_name    => 'mariadb-client',
+  package_ensure  => '10.1.14+maria-1~trusty',
+  bindings_enable => true,
+}
+
+# Dependency management. Only use that part if you are installing the repository
+# as shown in the Preliminary step of this example.
+Apt::Source['mariadb'] ~>
+Class['apt::update'] ->
+Class['::mysql::client']
 ```
 
 ## Reference
@@ -435,6 +591,10 @@ Sets the server backup implementation. Valid values are:
 * `mysqlbackup`: Implements backups with MySQL Enterprise Backup from Oracle. Backup type: Physical. To use this type of backup, you'll need the `meb` package, which is available in RPM and TAR formats from Oracle. For Ubuntu, you can use [meb-deb](https://github.com/dveeden/meb-deb) to create a package from an official tarball.
 * `xtrabackup`: Implements backups with XtraBackup from Percona. Backup type: Physical.
 
+##### `maxallowedpacket`
+
+Defines the maximum SQL statement size for the backup dump script. The default value is 1MB, as this is the default MySQL Server value.
+
 #### mysql::server::monitor
 
 ##### `mysql_monitor_username`
@@ -661,6 +821,10 @@ Specifies whether to create the database. Valid values are 'present', 'absent'. 
 
 Timeout, in seconds, for loading the sqlfiles. Defaults to '300'.
 
+##### `import_cat_cmd`
+
+Command to read the sqlfile for importing the database. Useful for compressed sqlfiles. For example, you can use 'zcat' for .gz files. Defaults to 'cat'.
+
 ### Types
 
 #### mysql_database
@@ -733,9 +897,7 @@ Maximum updates per hour for the user. Must be an integer value. A value of '0' 
 
 #### mysql_grant
 
-`mysql_grant` creates grant permissions to access databases within
-MySQL. To create grant permissions to access databases with MySQL, use it you must create the title of the resource as shown below,
-following the pattern of `username@hostname/database.table`:
+`mysql_grant` creates grant permissions to access databases within MySQL. To create grant permissions to access databases with MySQL, use it you must create the title of the resource as shown below, following the pattern of `username@hostname/database.table`:
 
 ```
 mysql_grant { 'root@localhost/*.*':
@@ -757,6 +919,8 @@ mysql_grant { 'root@localhost/mysql.user':
   user       => 'root@localhost',
 }
 ```
+
+To revoke GRANT privilege specify ['NONE'].
 
 ##### `ensure`
 
@@ -833,13 +997,15 @@ loopback interfaces. Because those nodes aren't connected to the outside world, 
 This module has been tested on:
 
 * RedHat Enterprise Linux 5, 6, 7
-* Debian 6, 7
+* Debian 6, 7, 8
 * CentOS 5, 6, 7
-* Ubuntu 10.04, 12.04, 14.04
+* Ubuntu 10.04, 12.04, 14.04, 16.04
 * Scientific Linux 5, 6
 * SLES 11
 
 Testing on other platforms has been minimal and cannot be guaranteed.
+
+**Note:** The mysqlbackup.sh does not work and is not supported on MySQL 5.7 and greater.
 
 ## Development
 
@@ -868,4 +1034,4 @@ This module is based on work by David Schmitt. The following contributors have c
 * Michael Arnold
 * Chris Weyl
 * Daniël van Eeden
-
+* Jan-Otto Kröpke

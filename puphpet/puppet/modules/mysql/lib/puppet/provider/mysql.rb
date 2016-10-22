@@ -3,8 +3,8 @@ class Puppet::Provider::Mysql < Puppet::Provider
   # Without initvars commands won't work.
   initvars
 
-  # Make sure we find mysqld on CentOS
-  ENV['PATH']=ENV['PATH'] + ':/usr/libexec'
+  # Make sure we find mysql commands on CentOS and FreeBSD
+  ENV['PATH']=ENV['PATH'] + ':/usr/libexec:/usr/local/libexec:/usr/local/bin'
 
   commands :mysql      => 'mysql'
   commands :mysqld     => 'mysqld'
@@ -21,10 +21,9 @@ class Puppet::Provider::Mysql < Puppet::Provider
 
   def self.mysqld_type
     # find the mysql "dialect" like mariadb / mysql etc.
-    mysqld_version_string.scan(/\s\(mariadb/i) { return "mariadb" }
-    mysqld_version_string.scan(/\s\(mysql/i) { return "mysql" }
+    mysqld_version_string.scan(/mariadb/i) { return "mariadb" }
     mysqld_version_string.scan(/\s\(percona/i) { return "percona" }
-    nil
+    return "mysql"
   end
 
   def mysqld_type
@@ -32,10 +31,8 @@ class Puppet::Provider::Mysql < Puppet::Provider
   end
 
   def self.mysqld_version_string
-    # we cache the result ...
-    return @mysqld_version_string unless @mysqld_version_string.nil?
-    @mysqld_version_string = mysqld(['-V'].compact)
-    return @mysqld_version_string
+    # As the possibility of the mysqld being remote we need to allow the version string to be overridden, this can be done by facter.value as seen below. In the case that it has not been set and the facter value is nil we use the mysql -v command to ensure we report the correct version of mysql for later use cases.
+    @mysqld_version_string ||= Facter.value(:mysqld_version) || mysqld('-V')
   end
 
   def mysqld_version_string
@@ -59,6 +56,15 @@ class Puppet::Provider::Mysql < Puppet::Provider
 
   def self.users
     mysql([defaults_file, '-NBe', "SELECT CONCAT(User, '@',Host) AS User FROM mysql.user"].compact).split("\n")
+  end
+
+  # Optional parameter to run a statement on the MySQL system database.
+  def self.system_database
+    '--database=mysql'
+  end
+
+  def system_database
+    self.class.system_database
   end
 
   # Take root@localhost and munge it to 'root'@'localhost'

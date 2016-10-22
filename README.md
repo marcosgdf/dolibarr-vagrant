@@ -23,16 +23,16 @@ After Puppet provision, you must reboot MySQL service so that the strict mode ge
 ```
 
 ### Stack
-* OS: Ubuntu 14.04.3 LTS x64
+* OS: Ubuntu 16.04.1 LTS
 * 512 MB
-* HTTP server: Apache 2.4.18
-* PHP: 5.6.19-1+deb.sury.org~trusty+1
+* HTTP server: Apache/2.4.23 (Ubuntu)
+* PHP: 5.6.27-1+deb.sury.org~xenial+1
 * DB:
-	* MySQL 5.7.11 MySQL Community Server
-	* PostgreSQL 9.3.11 (remember to follow this tutorial https://gist.github.com/ffmike/877447 after provisioning the VM)
+	* MySQL 5.7.16 MySQL Community Server (GPL)
+	* PostgreSQL 9.6.0 (remember to follow this tutorial https://gist.github.com/ffmike/877447 after provisioning the VM)
 * XDebug
 * Xhprof
-* Mailhog 0.1.8
+* Mailhog
 * Composer
 * Adminer 4.2.4
 
@@ -44,7 +44,7 @@ After Puppet provision, you must reboot MySQL service so that the strict mode ge
 * MySQL:
 	* user/user for db dolibarr
 	* root/root
-	* Initial dolibarr data: dev/initdata/mysqldump_dolibarr-3.5.0.sql
+	* Initial dolibarr data: dev/initdata/mysqldump_dolibarr-3.8.0.sql
 * PostgreSQL:
 	* postgres/123
 	
