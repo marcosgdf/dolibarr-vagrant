@@ -19,7 +19,7 @@ vagrantfile:
                         check_guest_tools: 0
                         update_guest_tools: 0
                 machines:
-                    vflm_8xkfbt8de1e3:
+                    vflm_aojl5czxzbzz:
                         id: machine1
                         hostname: dolibarr.local
                         network:
@@ -36,7 +36,7 @@ vagrantfile:
                     - '--verbose'
                     - '--hiera_config /vagrant/puphpet/puppet/hiera.yaml'
         synced_folder:
-            vflsf_sr7g4wvnq105:
+            vflsf_32yns80azu2b:
                 source: ../dolibarr/
                 target: /var/www/dolibarr
                 sync_type: default
@@ -112,7 +112,7 @@ nginx:
         names_hash_bucket_size: 128
     upstreams: {  }
     vhosts:
-        nxv_0gjsk3jxvj1q:
+        nxv_ocslhcswngfy:
             server_name: awesome.dev
             server_aliases:
                 - www.awesome.dev
@@ -128,7 +128,7 @@ nginx:
             rewrite_to_https: '1'
             spdy: '1'
             locations:
-                nxvl_35jhdefdg826:
+                nxvl_s4ugmy32mx9v:
                     www_root: ''
                     location: /
                     try_files:
@@ -140,7 +140,7 @@ nginx:
                     fastcgi_split_path: ''
                     proxy: ''
                     proxy_redirect: ''
-                nxvl_36vy42xpa3rh:
+                nxvl_x70xm1c6s9hj:
                     www_root: ''
                     location: '~ \.php$'
                     try_files:
@@ -170,7 +170,7 @@ apache:
         - proxy_fcgi
         - rewrite
     vhosts:
-        av_za6hufv7gi9o:
+        av_nn0xpip3hil1:
             servername: dolibarr.local
             docroot: /var/www/dolibarr/htdocs
             port: '80'
@@ -185,7 +185,7 @@ apache:
             ssl_protocol: ''
             ssl_cipher: ''
             directories:
-                avd_7957g5dz5vs4:
+                avd_fo4l069jby20:
                     path: /var/www/dolibarr
                     options:
                         - Indexes
@@ -197,7 +197,7 @@ apache:
                         - 'all granted'
                     custom_fragment: ''
                     files_match:
-                        avdfm_aa71yw0x167t:
+                        avdfm_555m3ompnzpd:
                             path: \.php$
                             sethandler: 'proxy:fcgi://127.0.0.1:9000'
                             custom_fragment: ''
@@ -231,7 +231,7 @@ php:
     fpm_ini:
         error_log: /var/log/php-fpm.log
     fpm_pools:
-        phpfp_mpwni2q86qv7:
+        phpfp_iw1nf7ej2wl8:
             ini:
                 prefix: www
                 listen: '127.0.0.1:9000'
@@ -306,15 +306,15 @@ mariadb:
         override_options: {  }
     adminer: 0
     users:
-        mariadbnu_urz62qt7s7ml:
+        mariadbnu_kgaxpk8h0br8:
             name: dbuser
             password: '123'
     databases:
-        mariadbnd_4na8ww46utnq:
+        mariadbnd_6lki6bqakjnc:
             name: dbname
             sql: ''
     grants:
-        mariadbng_1uebe8jp69qw:
+        mariadbng_nl4gvqlfq491:
             user: dbuser
             table: '*.*'
             privileges:
@@ -327,15 +327,15 @@ mysql:
         override_options: {  }
     adminer: '1'
     users:
-        mysqlnu_t1w56es2k3mr:
+        mysqlnu_lx19ncrq9wbd:
             name: user
             password: user
     databases:
-        mysqlnd_dlpdkbqimndb:
+        mysqlnd_3r5axtt66los:
             name: dolibar
             sql: /var/www/dolibarr/dev/initdemo/mysqldump_dolibarr_3.8.0.sql
     grants:
-        mysqlng_x9up635fywxt:
+        mysqlng_o8xaoxudb68c:
             user: user
             table: '*.*'
             privileges:
