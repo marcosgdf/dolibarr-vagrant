@@ -1,3 +1,4 @@
 .idea
 .vagrant
 puphpet/files/dot/ssh/*
+puphpet/config-custom.yaml

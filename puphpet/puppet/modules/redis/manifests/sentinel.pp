@@ -63,6 +63,11 @@
 #
 #   Default: /var/log/redis/redis.log
 #
+# [*log_level*]
+#   Specify how much we should log.
+#
+#   Default: notice
+#
 # [*master_name*]
 #   Specify the name of the master redis server.
 #   The valid charset is A-z 0-9 and the three characters ".-_".
@@ -105,6 +110,12 @@
 #   signal sdown state.
 #
 #   Default: 2
+#
+# [*sentinel_bind*]
+#   Allow optional sentinel server ip binding.  Can help overcome
+#   issues arising from protect-mode added Redis 3.2
+#
+#   Default: undef
 #
 # [*sentinel_port*]
 #   The port of sentinel server.
@@ -164,6 +175,7 @@ class redis::sentinel (
   $failover_timeout       = $::redis::params::sentinel_failover_timeout,
   $init_script            = $::redis::params::sentinel_init_script,
   $init_template          = $::redis::params::sentinel_init_template,
+  $log_level              = $::redis::params::log_level,
   $log_file               = $::redis::params::log_file,
   $master_name            = $::redis::params::sentinel_master_name,
   $redis_host             = $::redis::params::bind,
@@ -173,19 +185,32 @@ class redis::sentinel (
   $parallel_sync          = $::redis::params::sentinel_parallel_sync,
   $pid_file               = $::redis::params::sentinel_pid_file,
   $quorum                 = $::redis::params::sentinel_quorum,
+  $sentinel_bind          = $::redis::params::sentinel_bind,
   $sentinel_port          = $::redis::params::sentinel_port,
   $service_group          = $::redis::params::service_group,
   $service_name           = $::redis::params::sentinel_service_name,
+  $service_ensure         = $::redis::params::service_ensure,
   $service_user           = $::redis::params::service_user,
   $working_dir            = $::redis::params::sentinel_working_dir,
   $notification_script    = $::redis::params::sentinel_notification_script,
   $client_reconfig_script = $::redis::params::sentinel_client_reconfig_script,
 ) inherits redis::params {
 
-  unless defined(Package[$package_name]) {
-    ensure_resource('package', $package_name, {
-      'ensure' => $package_ensure
-    })
+  require ::redis
+
+  if $::osfamily == 'Debian' {
+    # Debian flavour machines have a dedicated redis-sentinel package
+    # This is default in Xenial or Stretch onwards or PPA/other upstream
+    # See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=775414 for context
+    if (
+      (versioncmp($::operatingsystemmajrelease, '16.04') >= 0 and $::operatingsystem == 'Ubuntu') or
+      (versioncmp($::operatingsystemmajrelease, '9') >= 0 and $::operatingsystem == 'Debian') or
+      $::redis::manage_repo
+      ) {
+      package { $package_name:
+        ensure => $package_ensure,
+      }
+    }
   }
 
   file {
@@ -227,7 +252,7 @@ class redis::sentinel (
   }
 
   service { $service_name:
-    ensure     => $::redis::params::service_ensure,
+    ensure     => $service_ensure,
     enable     => $::redis::params::service_enable,
     hasrestart => $::redis::params::service_hasrestart,
     hasstatus  => $::redis::params::service_hasstatus,

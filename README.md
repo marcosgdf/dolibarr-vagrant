@@ -23,18 +23,17 @@ After Puppet provision, you must reboot MySQL service so that the strict mode ge
 ```
 
 ### Stack
-* OS: Ubuntu 16.04.1 LTS
+* OS: Ubuntu 16.04.3 LTS
 * 512 MB
-* HTTP server: Apache/2.4.23 (Ubuntu)
-* PHP: 5.6.27-1+deb.sury.org~xenial+1
-* DB:
-	* MySQL 5.7.16 MySQL Community Server (GPL)
-	* PostgreSQL 9.6.0 (remember to follow this tutorial https://gist.github.com/ffmike/877447 after provisioning the VM)
+* HTTP server: Apache/2.4.29 (Ubuntu)
+* PHP: 7.2.3-1+ubuntu16.04.1+deb.sury.org+1
+* Database servers:
+	* MySQL 5.7.21 MySQL Community Server (GPL)
+	* PostgreSQL 9.6.8 (remember to follow this tutorial https://gist.github.com/ffmike/877447 after provisioning the VM)
 * XDebug
 * Xhprof
 * Mailhog
 * Composer
-* Adminer 4.2.4
 
 ### Usage
 * IP: 192.168.42.101
@@ -42,20 +41,15 @@ After Puppet provision, you must reboot MySQL service so that the strict mode ge
 * Root user: root
 * Root password: root
 * MySQL:
-	* user/user for db dolibarr
+	* user/user for db dolibar
 	* root/root
-	* Initial dolibarr data: dev/initdata/mysqldump_dolibarr-3.8.0.sql
+	* Initial dolibarr data: dev/initdata/mysqldump_dolibarr-6.0.0.sql
 * PostgreSQL:
 	* postgres/123
 	
 #### DB access
 DB connections outside the machine are not allowed. You must connect through a SSH tunnel. You can find the private key for vagrant user in puphpet/files/dot/ssh/id_rsa
 
-#### Mailhog
-You can access Mailhog to read all outgoing emails at http://192.168.42.101:8025
-
-#### Adminer
-Adminer is a DB web client. You can access it through http://192.168.42.101/adminer/
-
-#### XHProf
-XHProf is a function-level hierarchical profiler for PHP. You can access it through http://192.168.42.101/xhprof/xhprof_html/
+#### Extra utilities
+* Mailhog: Useful to intercept and read all outgoing emails. Accesible at http://dolibarr.local:8025
+* XHProf: a function-level hierarchical profiler for PHP. You can access it through http://192.168.42.101/xhprof/xhprof_html/

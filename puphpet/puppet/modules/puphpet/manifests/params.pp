@@ -2,49 +2,56 @@ class puphpet::params (
   $extra_config_files = []
 ) {
 
-  $puphpet_base_dir     = '/vagrant/puphpet'
-  $puphpet_manifest_dir = "${puphpet_base_dir}/puppet/manifests/puphpet"
+  $puphpet_core_dir  = pick(getvar('::puphpet_core_dir'), '/opt/puphpet')
+  $puphpet_state_dir = pick(getvar('::puphpet_state_dir'), '/opt/puphpet-state')
+  $ssh_username      = pick(getvar('::ssh_username'), 'root')
+  $provisioner_type  = pick(getvar('::provisioner_type'), 'remote')
+
+  $puphpet_manifest_dir = "${puphpet_core_dir}/puppet/modules/puphpet"
 
   $base_configs = [
-    "${puphpet_base_dir}/config.yaml",
-    "${puphpet_base_dir}/config-${::provisioner_type}.yaml",
+    "${puphpet_core_dir}/config.yaml",
+    "${puphpet_core_dir}/config-${provisioner_type}.yaml",
   ]
 
-  $custom_config = ["${puphpet_base_dir}/config-custom.yaml"]
+  $custom_config = ["${puphpet_core_dir}/config-custom.yaml"]
 
   $yaml = merge_yaml($base_configs, $extra_config_files, $custom_config)
 
+  $strategy = {
+    'strategy'          => 'deep',
+    'merge_hash_arrays' => true
+  }
+
   $hiera = {
-    vm             => hiera_hash('vagrantfile', {}),
+    vm             => lookup('vagrantfile',     Hash, $strategy, {}),
     apache         => $yaml['apache'],
-    beanstalkd     => hiera_hash('beanstalkd', {}),
-    blackfire      => hiera_hash('blackfire', {}),
-    cron           => hiera_hash('cron', {}),
-    drush          => hiera_hash('drush', {}),
-    elasticsearch  => hiera_hash('elastic_search', {}),
-    firewall       => hiera_hash('firewall', {}),
-    hhvm           => hiera_hash('hhvm', {}),
-    letsencrypt    => hiera_hash('letsencrypt', {}),
-    locales        => hiera_hash('locale', {}),
-    mailhog        => hiera_hash('mailhog', {}),
-    mariadb        => hiera_hash('mariadb', {}),
-    mongodb        => hiera_hash('mongodb', {}),
-    mysql          => hiera_hash('mysql', {}),
+    beanstalkd     => lookup('beanstalkd',      Hash, $strategy, {}),
+    blackfire      => lookup('blackfire',       Hash, $strategy, {}),
+    cron           => lookup('cron',            Hash, $strategy, {}),
+    drush          => lookup('drush',           Hash, $strategy, {}),
+    elasticsearch  => lookup('elastic_search',  Hash, $strategy, {}),
+    firewall       => lookup('firewall',        Hash, $strategy, {}),
+    letsencrypt    => lookup('letsencrypt',     Hash, $strategy, {}),
+    locales        => lookup('locale',          Hash, $strategy, {}),
+    mailhog        => lookup('mailhog',         Hash, $strategy, {}),
+    mariadb        => lookup('mariadb',         Hash, $strategy, {}),
+    mongodb        => lookup('mongodb',         Hash, $strategy, {}),
+    mysql          => lookup('mysql',           Hash, $strategy, {}),
     nginx          => $yaml['nginx'],
-    nodejs         => hiera_hash('nodejs', {}),
-    php            => hiera_hash('php', {}),
-    postgresql     => hiera_hash('postgresql', {}),
-    python         => hiera_hash('python', {}),
-    rabbitmq       => hiera_hash('rabbitmq', {}),
-    redis          => hiera_hash('redis', {}),
-    ruby           => hiera_hash('ruby', {}),
-    server         => hiera_hash('server', {}),
-    solr           => hiera_hash('solr', {}),
-    sqlite         => hiera_hash('sqlite', {}),
-    users_groups   => hiera_hash('users_groups', {}),
-    wpcli          => hiera_hash('wpcli', {}),
-    xdebug         => hiera_hash('xdebug', {}),
-    xhprof         => hiera_hash('xhprof', {}),
+    nodejs         => lookup('nodejs',          Hash, $strategy, {}),
+    php            => lookup('php',             Hash, $strategy, {}),
+    postgresql     => lookup('postgresql',      Hash, $strategy, {}),
+    python         => lookup('python',          Hash, $strategy, {}),
+    rabbitmq       => lookup('rabbitmq',        Hash, $strategy, {}),
+    redis          => lookup('redis',           Hash, $strategy, {}),
+    resolv         => lookup('resolv',          Hash, $strategy, {}),
+    ruby           => lookup('ruby',            Hash, $strategy, {}),
+    server         => lookup('server',          Hash, $strategy, {}),
+    sqlite         => lookup('sqlite',          Hash, $strategy, {}),
+    users_groups   => lookup('users_groups',    Hash, $strategy, {}),
+    wpcli          => lookup('wpcli',           Hash, $strategy, {}),
+    xdebug         => lookup('xdebug',          Hash, $strategy, {}),
   }
 
 }

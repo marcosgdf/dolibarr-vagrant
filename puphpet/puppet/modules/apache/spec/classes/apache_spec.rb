@@ -110,6 +110,14 @@ describe 'apache', :type => :class do
       it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^AllowEncodedSlashes nodecode$} }
     end
 
+    context "when specifying fileETag behaviour" do
+      let :params do
+        { :file_e_tag => 'None' }
+      end
+
+      it { is_expected.to contain_file("/etc/apache2/apache2.conf").with_content %r{^FileETag None$} }
+    end
+
     context "when specifying default character set" do
       let :params do
         { :default_charset => 'none' }
@@ -555,12 +563,6 @@ describe 'apache', :type => :class do
         it { is_expected.not_to contain_class('apache::mod::peruser') }
         it { is_expected.not_to contain_class('apache::mod::prefork') }
       end
-      context "when declaring mpm_module => breakme" do
-        let :params do
-          { :mpm_module => 'breakme' }
-        end
-        it { expect { catalogue }.to raise_error Puppet::Error, /does not match/ }
-      end
     end
 
     describe "different templates for httpd.conf" do
@@ -634,7 +636,7 @@ describe 'apache', :type => :class do
         it "should fail" do
           expect do
             catalogue
-          end.to raise_error(Puppet::Error, /"foo" does not match/)
+          end.to raise_error(Puppet::PreformattedError, /Evaluation Error: Error while evaluating a Resource Statement, Class\[Apache\]: parameter 'sendfile' expects a match for Enum\['Off', 'On', 'off', 'on'\]/)
         end
       end
       context "On" do
@@ -851,6 +853,22 @@ describe 'apache', :type => :class do
       }
       end
       it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{Options -Indexes -FollowSymLinks} }
+    end
+    context 'with a custom root_directory_secured parameter and Apache < 2.4' do
+      let :params do {
+        :apache_version => '2.2',
+        :root_directory_secured => true
+      }
+      end
+      it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{Options FollowSymLinks\n\s+AllowOverride None\n\s+Order deny,allow\n\s+Deny from all} }
+    end
+    context 'with a custom root_directory_secured parameter and Apache >= 2.4' do
+      let :params do {
+        :apache_version => '2.4',
+        :root_directory_secured => true
+      }
+      end
+      it { is_expected.to contain_file("/etc/httpd/conf/httpd.conf").with_content %r{Options FollowSymLinks\n\s+AllowOverride None\n\s+Require all denied} }
     end
     context 'default vhost defaults' do
       it { is_expected.to contain_apache__vhost('default').with_ensure('present') }

@@ -9,6 +9,7 @@ vagrant_dot  = (ENV['VAGRANT_DOTFILE_PATH'].to_s.split.join.length > 0) ?
 
 provider = data['vm']['provider']['local']
 machines = !provider['machines'].empty? ? provider['machines'] : { }
+chosen_virtualizer = provider['chosen_virtualizer']
 
 if Vagrant.has_plugin?('vagrant-hostmanager')
   config.hostmanager.enabled = true
@@ -17,8 +18,11 @@ end
 
 machines.each do |i, machine|
   config.vm.define "#{machine['id']}" do |machine_id|
-    machine_id.vm.box     = "#{provider['box']}"
-    machine_id.vm.box_url = "#{provider['box_url']}"
+    machine_id.vm.box = "#{provider['box']}"
+
+    if provider['box_url'].to_s != '' && provider['box_url'].to_s != 'false'
+      machine_id.vm.box_url = "#{provider['box_url']}"
+    end
 
     if provider['box_version'].to_bool
       machine_id.vm.box_version = "#{provider['box_version']}"
@@ -87,6 +91,26 @@ machines.each do |i, machine|
       end
     end
 
+    if chosen_virtualizer.empty? || chosen_virtualizer == 'virtualbox'
+      mount_options_virtualizer = ['rw', 'dmode="777"', 'fmode="666"']
+    elsif chosen_virtualizer == 'parallels'
+      mount_options_virtualizer = ['rw', 'share']
+    else
+      mount_options_virtualizer = ['rw']
+    end
+
+    # https://github.com/fgrehm/vagrant-cachier
+    if Vagrant.has_plugin?("vagrant-cachier")
+      config.cache.scope = :box
+      if "#{provider['box']}".include?('ubuntu-16.04') || "#{provider['box']}".include?('ubuntu1604')
+        config.cache.synced_folder_opts = {
+          mount_options: mount_options_virtualizer,
+          owner: "_apt",
+          group: "_apt"
+        }
+      end
+    end
+
     # https://github.com/smdahlen/vagrant-hostmanager
     if Vagrant.has_plugin?('vagrant-hostmanager')
       hosts = Array.new()
@@ -140,8 +164,8 @@ machines.each do |i, machine|
 
     data['vm']['synced_folder'].each do |i, folder|
       if folder['source'] != '' && folder['target'] != ''
-        sync_owner = !folder['owner'].nil? ? folder['owner'] : 'www-data'
-        sync_group = !folder['group'].nil? ? folder['group'] : 'www-data'
+        sync_owner = !folder['owner'].nil? ? folder['owner'] : 'vagrant'
+        sync_group = !folder['group'].nil? ? folder['group'] : 'vagrant'
 
         if folder['sync_type'] == 'nfs'
           if Vagrant.has_plugin?('vagrant-bindfs')
@@ -149,7 +173,7 @@ machines.each do |i, machine|
               id: "#{i}",
               type: 'nfs'
             machine_id.bindfs.bind_folder "/mnt/vagrant-#{i}", "#{folder['target']}",
-              after: :provision,
+              after: !folder['after'].nil? ? folder['after'].to_sym : :synced_folders,
               force_user: sync_owner,
               force_group: sync_group,
               perms: "u=rwX:g=rwX:o=rD",
@@ -158,24 +182,27 @@ machines.each do |i, machine|
             machine_id.vm.synced_folder "#{folder['source']}", "#{folder['target']}",
               id: "#{i}",
               type: 'nfs',
-              :nfs => { :mount_options => ["dmode=777","fmode=666"] }
+              :nfs => { :mount_options => mount_options_virtualizer }
           end
         elsif folder['sync_type'] == 'smb'
-          smb__host     = !folder['smb']['smb_host'].nil? ?
+          smb__host     = !folder['smb']['smb_host'].to_s.empty? ?
             folder['smb']['smb_host'] :
             nil
-          smb__username = !folder['smb']['smb_username'].nil? ?
+          smb__username = !folder['smb']['smb_username'].to_s.empty? ?
             folder['smb']['smb_username'] :
             nil
-          smb__password = !folder['smb']['smb_password'].nil? ?
+          smb__password = !folder['smb']['smb_password'].to_s.empty? ?
             folder['smb']['smb_password'] :
             nil
-          smb__dir_options  = !folder['smb']['mount_options']['dir_mode'].nil? ?
+          smb__dir_options  = !folder['smb']['mount_options']['dir_mode'].to_s.empty? ?
             folder['smb']['mount_options']['dir_mode'] :
             0775
-          smb__file_options = !folder['smb']['mount_options']['file_mode'].nil? ?
+          smb__file_options = !folder['smb']['mount_options']['file_mode'].to_s.empty? ?
             folder['smb']['mount_options']['file_mode'] :
             0664
+          smb__vers = !folder['smb']['mount_options']['vers'].nil? ?
+            folder['smb']['mount_options']['vers'] :
+            '3.0'
 
           machine_id.vm.synced_folder "#{folder['source']}", "#{folder['target']}",
             id: "#{i}",
@@ -185,7 +212,7 @@ machines.each do |i, machine|
             smb_host: smb__host,
             smb_username: smb__username,
             smb_password: smb__password,
-            mount_options: ["dir_mode=#{smb__dir_options},file_mode=#{smb__file_options}"]
+            mount_options: ["mfsymlinks,dir_mode=#{smb__dir_options},file_mode=#{smb__file_options},vers=#{smb__vers}"]
         elsif folder['sync_type'] == 'rsync'
           rsync_args    = !folder['rsync']['args'].nil? ?
             folder['rsync']['args'] :
@@ -220,8 +247,6 @@ machines.each do |i, machine|
         end
       end
     end
-
-    chosen_virtualizer = provider['chosen_virtualizer']
 
     unless ENV.fetch('VAGRANT_DEFAULT_PROVIDER', '').strip.empty?
       chosen_virtualizer = ENV['VAGRANT_DEFAULT_PROVIDER'];
@@ -300,6 +325,28 @@ machines.each do |i, machine|
           end
         end
       end
+      machine_id.vm.provider :vmware_workstation do |v, override|
+        provider['virtualizers']['vmware'].each do |key, value|
+          if key == 'memsize'
+            next
+          end
+          if key == 'cpus'
+            next
+          end
+
+          v.vmx["#{key}"] = "#{value}"
+        end
+
+        v.vmx['memsize']  = "#{machine['memory']}"
+        v.vmx['numvcpus'] = "#{machine['cpus']}"
+
+        if provider['virtualizers']['vmware']['displayName'].nil? ||
+          provider['virtualizers']['vmware']['displayName'].empty?
+          if machine_id.vm.hostname.to_s.strip.length != 0
+            v.vmx['displayName'] = machine_id.vm.hostname
+          end
+        end
+      end
     end
 
     if chosen_virtualizer == 'parallels'
@@ -357,11 +404,12 @@ machines.each do |i, machine|
       :inline => "sed -i -e 's/\r$//' /vagrant/puphpet/shell/*.sh"
     machine_id.vm.provision 'shell' do |s|
       s.path = 'puphpet/shell/initial-setup.sh'
-      s.args = '/vagrant/puphpet'
     end
+    machine_id.vm.provision :shell,
+      :inline => 'chmod +x /opt/puphpet/standalone-puppet.sh'
     machine_id.vm.provision 'shell' do |s|
       s.path = 'puphpet/shell/ssh-keygen.sh'
-      s.args = "#{ssh_username}"
+      s.args = ["#{ssh_username}"]
     end
     machine_id.vm.provision 'shell' do |s|
       s.path = 'puphpet/shell/install-puppet.sh'
@@ -404,7 +452,9 @@ machines.each do |i, machine|
       s.args = ['startup-once-unprivileged', 'startup-always-unprivileged']
     end
 
-    machine_id.vm.provision :shell, :path => 'puphpet/shell/important-notices.sh'
+    machine_id.vm.provision :shell, privileged: true do |s|
+      s.path = 'puphpet/shell/important-notices.sh'
+    end
 
     customKey  = "#{dir}/puphpet/files/dot/ssh/id_rsa"
     vagrantKey = "#{vagrant_dot}/machines/#{machine['id']}/#{ENV['VAGRANT_DEFAULT_PROVIDER']}/private_key"

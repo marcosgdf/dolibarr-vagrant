@@ -12,6 +12,7 @@ class puphpet  (
   include ::puphpet::cron
   include ::puphpet::firewall
   include ::puphpet::locale
+  include ::puphpet::resolv
   include ::puphpet::ruby
   include ::puphpet::server
   include ::puphpet::usersgroups
@@ -30,10 +31,6 @@ class puphpet  (
 
   if array_true($puphpet::params::hiera['elasticsearch'], 'install') {
     include ::puphpet::elasticsearch::install
-  }
-
-  if array_true($puphpet::params::hiera['hhvm'], 'install') {
-    include ::puphpet::hhvm::install
   }
 
   if array_true($puphpet::params::hiera['mailhog'], 'install') {
@@ -70,10 +67,6 @@ class puphpet  (
     if array_true($puphpet::params::hiera['blackfire'], 'install') {
       include ::puphpet::blackfire::install
     }
-
-    if array_true($puphpet::params::hiera['xhprof'], 'install') {
-      include ::puphpet::xhprof
-    }
   }
 
   if array_true($puphpet::params::hiera['postgresql'], 'install') {
@@ -96,16 +89,12 @@ class puphpet  (
     include ::puphpet::letsencrypt::install
   }
 
-  if array_true($puphpet::params::hiera['solr'], 'install') {
-    include ::puphpet::solr::install
-  }
-
   if array_true($puphpet::params::hiera['sqlite'], 'install') {
     include ::puphpet::sqlite::install
   }
 
   if array_true($puphpet::params::hiera['wpcli'], 'install') {
-    include ::puphpet::wpcli
+    include ::puphpet::wpcli::install
   }
 
 }

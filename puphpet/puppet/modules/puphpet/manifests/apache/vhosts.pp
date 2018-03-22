@@ -9,40 +9,39 @@
 # puphpet::apache::vhosts { 'name':
 #   vhosts => {
 #     unique_vhost_key => {
-#       servername       => 'awesome.dev',
-#       serveraliases    => [ 'www.awesome.dev', ],
-#       docroot          => '/var/www/awesome',
-#       port             => '80',
-#       setenv           => [ 'APP_ENV dev', ],
-#       setenvif         => [ 'Authorization "(.*)" HTTP_AUTHORIZATION=$1', ],
-#       custom_fragment  => '',
-#       ssl              => '0',
-#       ssl_cert         => '',
-#       ssl_key          => '',
-#       ssl_chain        => '',
-#       ssl_certs_dir    => '',
-#       ssl_protocol     => '',
-#       ssl_cipher       => '',
-#       directories      => {
+#       servername      => 'awesome.dev',
+#       serveraliases   => [ 'www.awesome.dev', ],
+#       docroot         => '/var/www/awesome/web',
+#       port            => '80',
+#       setenvif        => [ 'Authorization "(.*)" HTTP_AUTHORIZATION=$1', ]
+#       custom_fragment => '',
+#       ssl             => '0',
+#       ssl_cert        => '',
+#       ssl_key         => '',
+#       ssl_chain       => '',
+#       ssl_certs_dir   => '',
+#       ssl_protocol    => '',
+#       ssl_cipher      => '',
+#       directories     => {
 #         unique_directory_key => {
-#           path             => '/var/www/awesome',
-#           options          => [
+#           provider        => 'directory',
+#           path            => '/var/www/awesome/web',
+#           directoryindex  => 'app.dev',
+#           options         => [
 #             'Indexes',
 #             'FollowSymlinks',
 #             'MultiViews',
 #           ],
-#           allow_override   => [ 'All', ],
-#           require          => [ 'all granted', ],
-#           custom_fragment  => '',
-#           files_match => {
-#             unique_files_match_key => {
-#               path             => '\.php$',
-#               sethandler       => 'proxy:fcgi://127.0.0.1:9000',
-#               custom_fragment  => '',
-#               provider         => 'filesmatch',
-#             },
-#           },
-#           provider => 'directory',
+#           allow_override  => [ 'All', ],
+#           require         => [ 'all granted', ],
+#           custom_fragment => '',
+#         },
+#         unique_files_match_key => {
+#           provider        => 'filesmatch',
+#           path            => '/(app_dev|config)\.php$',
+#           sethandler      => 'proxy:fcgi://127.0.0.1:9000',
+#           setenv          => [ 'APP_ENV dev', ],
+#           custom_fragment => '',
 #         },
 #       },
 #     },
@@ -58,10 +57,13 @@ define puphpet::apache::vhosts (
   $apache = $puphpet::params::hiera['apache']
 
   each( $vhosts ) |$key, $vhost| {
+    $chown = "${puphpet::apache::params::webroot_user}:${puphpet::apache::params::webroot_group}"
+
     exec { "exec mkdir -p ${vhost['docroot']} @ key ${key}":
-      command => "mkdir -m 775 -p ${vhost['docroot']}",
-      user    => $puphpet::apache::params::webroot_user,
-      group   => $puphpet::apache::params::webroot_group,
+      command => "mkdir -m 775 -p ${vhost['docroot']} && \
+                  chown ${chown} ${vhost['docroot']}",
+      user    => 'root',
+      group   => 'root',
       creates => $vhost['docroot'],
       require => Exec['Create apache webroot'],
     }
@@ -111,24 +113,34 @@ define puphpet::apache::vhosts (
       default => $ssl_certs_dir,
     }
 
-    # required by puphpet/apache/files_match.erb
-    $apache_version = $puphpet::apache::params::package_version
-
     if array_true($vhost, 'directories') {
-      $directories_hash   = $vhost['directories']
-      $files_match        = template('puphpet/apache/files_match.erb')
-      $directories_merged = merge($vhost['directories'], hash_eval($files_match))
+      $directories_hash = $vhost['directories']
     } else {
-      $directories_merged = []
+      $directories_hash = {}
     }
 
-    $vhost_custom_fragment = array_true($vhost, 'custom_fragment') ? {
-      true    => file($vhost['custom_fragment']),
-      default => '',
+    # Legacy support: files_match and directories used to be separate hashes
+    if array_true($vhost, 'files_match') {
+      $files_match_hash = $vhost['files_match']
+    } else {
+      $files_match_hash = {}
     }
 
-    $vhost_merged = merge($vhost, {
-      'directories'     => values_no_error($directories_merged),
+    $directories_merged  = merge($directories_hash, $files_match_hash)
+    $directories_w_custom_fragments = apache_directories_custom_fragment($directories_merged)
+    $directories_trimmed = remove_empty_hash_values($directories_w_custom_fragments)
+
+    if array_true($vhost, 'custom_fragment') {
+      $vhost_custom_fragment = ($vhost['custom_fragment'] =~ Array) ? {
+        true    => join($vhost['custom_fragment'], "\n  "),
+        default => file($vhost['custom_fragment']),
+      }
+    } else {
+      $vhost_custom_fragment = undef
+    }
+
+    $vhost_merged = delete(merge($vhost, {
+      'directories'     => values_no_error($directories_trimmed),
       'ssl'             => $ssl,
       'ssl_cert'        => $ssl_cert_real,
       'ssl_key'         => $ssl_key_real,
@@ -138,7 +150,7 @@ define puphpet::apache::vhosts (
       'ssl_cipher'      => "\"${ssl_cipher}\"",
       'custom_fragment' => $vhost_custom_fragment,
       'manage_docroot'  => false
-    })
+    }), 'files_match')
 
     create_resources(::apache::vhost, { "${key}" => $vhost_merged })
 
